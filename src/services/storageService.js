@@ -171,6 +171,10 @@ export const storageService = {
       if (!saved.appName) {
         saved.appName = 'CBT Mindasa';
       }
+      // Paksa logo lokal (override URL lama dari Unsplash/Blogger)
+      if (!saved.schoolLogo || saved.schoolLogo.includes('unsplash') || saved.schoolLogo.includes('blogger')) {
+        saved.schoolLogo = './logo-min2.png';
+      }
       // Paksa URL Google Drive jika belum diisi atau masih kosong
       if (!saved.gdriveScriptUrl) {
         saved.gdriveScriptUrl = 'https://script.google.com/macros/s/AKfycbwmZqF5a6X5kLWWJZvrxLI4bPpxeug4KSuO2Y2OWJIth_9PgG14372wmv2Yb9wacG83/exec';
