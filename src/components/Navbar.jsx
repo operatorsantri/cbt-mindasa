@@ -21,9 +21,12 @@ export function Navbar({ currentUser, onLogout, onResetData, settings }) {
         
         {/* Left: Brand / School Logo */}
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-green-700 to-teal-500 flex items-center justify-center text-white shadow-md shadow-green-500/20 font-bold text-sm tracking-wider">
-            CBT
-          </div>
+          {/* Logo Resmi MIN 2 Kota Surabaya */}
+          <img
+            src={settings?.schoolLogo || 'https://blogger.googleusercontent.com/img/a/AVvXsEh3poYOGBCEzsUhSTExT1JfZ-6UyqFAK_FFwJysblERCBdzxIFHqla1b3r1jDrV3R4cejSEdmd0OpHEFcVQKFqPj__NvROSlDkg4AE4a9Jcx6G4imeLq8EldWhNOSkG2pUkdQP6DNW7UNzjIquSxNvEZGeyO_UMt3C_LZg_Xmo2PtJINIwgHjqwEMh-uws=w200'}
+            alt="Logo MIN 2 Kota Surabaya"
+            className="w-10 h-10 rounded-xl object-contain bg-white shadow-md border border-slate-100"
+          />
           <div>
             <div className="flex items-center space-x-2">
               <span className="font-bold text-slate-800 text-lg leading-tight tracking-tight">CBT Mindasa</span>
