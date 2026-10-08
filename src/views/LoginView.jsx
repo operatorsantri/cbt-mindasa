@@ -3,117 +3,125 @@ import {
   User, 
   GraduationCap, 
   ShieldCheck, 
-  Lock, 
   ArrowRight, 
-  Sparkles, 
   AlertCircle,
-  HelpCircle,
-  BookOpen
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export function LoginView({ onLogin, users = [], settings }) {
-  const [roleTab, setRoleTab] = useState('siswa'); // 'siswa' | 'guru' | 'admin'
+  const [roleTab, setRoleTab] = useState('siswa');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleManualLogin = (e) => {
     e.preventDefault();
     setErrorMsg('');
-
     const trimmedUser = username.trim().toLowerCase();
-    const found = users.find(u => 
-      (u.username.toLowerCase() === trimmedUser || (u.nisn && u.nisn === trimmedUser)) && 
-      u.password === password
+    const found = users.find(u =>
+      (u.username.toLowerCase() === trimmedUser || (u.nisn && u.nisn === trimmedUser)) &&
+      u.password === password &&
+      u.role === roleTab
     );
-
     if (found) {
       onLogin(found);
     } else {
-      setErrorMsg('Username/NISN atau kata sandi tidak cocok. Silakan periksa kembali!');
+      setErrorMsg('Username/NISN atau kata sandi tidak cocok.');
     }
   };
 
-  const handleQuickLogin = (demoRole) => {
-    const demoUser = users.find(u => u.role === demoRole);
-    if (demoUser) {
-      onLogin(demoUser);
-    } else {
-      setErrorMsg(`Akun demo ${demoRole} tidak ditemukan.`);
-    }
+  const roles = [
+    { key: 'siswa',  label: 'Siswa',      icon: User,         color: 'emerald' },
+    { key: 'guru',   label: 'Guru',       icon: GraduationCap, color: 'blue'    },
+    { key: 'admin',  label: 'Admin',      icon: ShieldCheck,  color: 'violet'  },
+  ];
+
+  const colorMap = {
+    emerald: { active: 'bg-emerald-600 text-white shadow-emerald-200', dot: 'bg-emerald-500', btn: 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500' },
+    blue:    { active: 'bg-blue-600 text-white shadow-blue-200',       dot: 'bg-blue-500',     btn: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'     },
+    violet:  { active: 'bg-violet-600 text-white shadow-violet-200',   dot: 'bg-violet-500',   btn: 'bg-violet-600 hover:bg-violet-700 focus:ring-violet-500' },
   };
+
+  const active = roles.find(r => r.key === roleTab);
+  const activeColor = colorMap[active.color];
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-100 via-blue-50/50 to-indigo-50/40">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+    <div className="min-h-screen flex bg-slate-50">
+      
+      {/* LEFT PANEL — branding */}
+      <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-green-800 to-teal-700 flex-col items-center justify-center p-12 text-white relative overflow-hidden">
+        {/* decorative circles */}
+        <div className="absolute -top-20 -left-20 w-72 h-72 bg-white/5 rounded-full" />
+        <div className="absolute -bottom-24 -right-16 w-96 h-96 bg-white/5 rounded-full" />
+
+        <img
+          src={settings?.schoolLogo || './logo-min2.png'}
+          alt="Logo MIN 2 Kota Surabaya"
+          className="w-32 h-32 object-contain drop-shadow-2xl mb-6 relative z-10"
+        />
+        <h1 className="text-3xl font-black tracking-tight text-center leading-tight relative z-10">
+          CBT Mindasa
+        </h1>
+        <p className="mt-2 text-green-200 text-sm font-medium text-center relative z-10">
+          {settings?.schoolName || 'MIN 2 KOTA SURABAYA'}
+        </p>
+        <div className="mt-10 space-y-3 relative z-10 w-full max-w-xs">
+          {[
+            'Ujian Berbasis Komputer',
+            'Pengacakan Soal Otomatis',
+            'Sistem Anti-Kecurangan',
+            'Analisis Nilai & Rapor Digital',
+          ].map(f => (
+            <div key={f} className="flex items-center space-x-3 bg-white/10 rounded-xl px-4 py-2.5 text-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-300 shrink-0" />
+              <span>{f}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* RIGHT PANEL — login form */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         
-        {/* Logo Resmi MIN 2 Kota Surabaya */}
-        <div className="flex justify-center mb-4">
+        {/* Logo mobile only */}
+        <div className="lg:hidden flex flex-col items-center mb-8">
           <img
             src={settings?.schoolLogo || './logo-min2.png'}
             alt="Logo MIN 2 Kota Surabaya"
-            className="w-24 h-24 object-contain drop-shadow-lg"
+            className="w-20 h-20 object-contain drop-shadow-lg mb-3"
           />
+          <h1 className="text-xl font-black text-slate-800">CBT Mindasa</h1>
+          <p className="text-xs text-slate-500 mt-0.5">{settings?.schoolName || 'MIN 2 KOTA SURABAYA'}</p>
         </div>
 
-        {/* CBT Badge */}
-        <div className="inline-flex items-center space-x-2 bg-green-100/80 text-green-800 text-xs font-semibold px-3 py-1 rounded-full mb-3 shadow-xs border border-green-200">
-          <Sparkles className="w-3.5 h-3.5 text-green-600" />
-          <span>Sistem Ujian Berbasis Komputer CBT Mindasa 2026</span>
-        </div>
-
-        <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-          Portal Masuk CBT Mindasa
-        </h2>
-        <p className="mt-1 text-sm text-slate-500 max-w-sm mx-auto">
-          {settings?.schoolName || 'MIN 2 KOTA SURABAYA'}
-        </p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg px-4 sm:px-0">
-        <div className="bg-white py-8 px-6 sm:px-10 shadow-xl rounded-2xl border border-slate-200">
-          
-          {/* Role Tabs */}
-          <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl mb-6">
-            <button
-              type="button"
-              onClick={() => { setRoleTab('siswa'); setErrorMsg(''); }}
-              className={`flex items-center justify-center space-x-1.5 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                roleTab === 'siswa' 
-                  ? 'bg-white text-emerald-700 shadow-xs' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <User className="w-4 h-4" />
-              <span>Siswa</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setRoleTab('guru'); setErrorMsg(''); }}
-              className={`flex items-center justify-center space-x-1.5 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                roleTab === 'guru' 
-                  ? 'bg-white text-blue-700 shadow-xs' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <GraduationCap className="w-4 h-4" />
-              <span>Guru</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setRoleTab('admin'); setErrorMsg(''); }}
-              className={`flex items-center justify-center space-x-1.5 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                roleTab === 'admin' 
-                  ? 'bg-white text-purple-700 shadow-xs' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Admin</span>
-            </button>
+        <div className="w-full max-w-md">
+          <div className="mb-8">
+            <h2 className="text-2xl font-extrabold text-slate-900">Selamat Datang</h2>
+            <p className="text-slate-500 text-sm mt-1">Silakan pilih peran dan masukkan akun Anda.</p>
           </div>
 
-          {/* Error Message */}
+          {/* Role selector */}
+          <div className="grid grid-cols-3 gap-2 mb-6">
+            {roles.map(({ key, label, icon: Icon, color }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => { setRoleTab(key); setErrorMsg(''); }}
+                className={`flex flex-col items-center py-3 px-2 rounded-xl border-2 text-xs font-bold transition-all cursor-pointer shadow-sm ${
+                  roleTab === key
+                    ? `${colorMap[color].active} border-transparent shadow-lg`
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <Icon className="w-5 h-5 mb-1" />
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Error */}
           {errorMsg && (
             <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-center space-x-2 text-xs text-rose-700">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -121,110 +129,53 @@ export function LoginView({ onLogin, users = [], settings }) {
             </div>
           )}
 
-          {/* Form Login */}
+          {/* Form */}
           <form onSubmit={handleManualLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                {roleTab === 'siswa' ? 'Username / NISN Siswa' : 'Username'}
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                {roleTab === 'siswa' ? 'Username atau NISN' : 'Username'}
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  placeholder={
-                    roleTab === 'siswa' ? 'Contoh: siswa1 atau 0085432101' : 
-                    roleTab === 'guru' ? 'Contoh: guru1' : 'Contoh: admin'
-                  }
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                />
-              </div>
+              <input
+                type="text"
+                required
+                placeholder={roleTab === 'siswa' ? 'Contoh: siswa1 atau 0085432101' : roleTab === 'guru' ? 'Contoh: guru1' : 'Contoh: admin'}
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-400 focus:border-blue-400 transition"
+              />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Kata Sandi (Password)
-              </label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Kata Sandi</label>
               <div className="relative">
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder="Masukkan kata sandi..."
+                  placeholder="Masukkan kata sandi"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  onChange={e => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-400 focus:border-blue-400 transition pr-11"
                 />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full mt-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center justify-center space-x-2 cursor-pointer"
+              className={`w-full py-3 px-4 rounded-xl text-sm font-bold text-white flex items-center justify-center space-x-2 transition focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer shadow-md ${activeColor.btn}`}
             >
-              <span>Masuk ke Akun</span>
+              <span>Masuk sebagai {active.label}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
 
-          {/* Quick Demo Login Shortcut */}
-          <div className="mt-8 pt-6 border-t border-slate-200">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center space-x-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Masuk Cepat Demo (1-Klik)</span>
-              </span>
-              <span className="text-[11px] text-slate-400">Siap Uji Langsung</span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('siswa')}
-                className="p-2.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100/80 rounded-xl text-center transition-all cursor-pointer group"
-              >
-                <div className="text-xs font-bold text-emerald-800">Siswa</div>
-                <div className="text-[10px] text-emerald-600 mt-0.5">Ahmad Rizki</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('guru')}
-                className="p-2.5 border border-blue-200 bg-blue-50 hover:bg-blue-100/80 rounded-xl text-center transition-all cursor-pointer group"
-              >
-                <div className="text-xs font-bold text-blue-800">Guru</div>
-                <div className="text-[10px] text-blue-600 mt-0.5">Budi, M.Pd.</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin')}
-                className="p-2.5 border border-purple-200 bg-purple-50 hover:bg-purple-100/80 rounded-xl text-center transition-all cursor-pointer group"
-              >
-                <div className="text-xs font-bold text-purple-800">Admin</div>
-                <div className="text-[10px] text-purple-600 mt-0.5">Full Control</div>
-              </button>
-            </div>
-          </div>
-
+          <p className="mt-8 text-center text-xs text-slate-400">
+            © 2026 CBT Mindasa • {settings?.schoolName || 'MIN 2 KOTA SURABAYA'}
+          </p>
         </div>
-
-        {/* Feature summary pills */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500">
-          <span className="bg-white/80 border border-slate-200 px-2.5 py-1 rounded-full shadow-2xs">
-            ✓ 4 Model Soal (PG, PG Kompleks, Menjodohkan, B/S)
-          </span>
-          <span className="bg-white/80 border border-slate-200 px-2.5 py-1 rounded-full shadow-2xs">
-            ✓ Acak Soal per Kategori
-          </span>
-          <span className="bg-white/80 border border-slate-200 px-2.5 py-1 rounded-full shadow-2xs">
-            ✓ Anti-Curang & Proctoring
-          </span>
-          <span className="bg-white/80 border border-slate-200 px-2.5 py-1 rounded-full shadow-2xs">
-            ✓ Google Drive Ready
-          </span>
-        </div>
-
       </div>
     </div>
   );
