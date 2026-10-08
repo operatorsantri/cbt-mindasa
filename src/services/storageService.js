@@ -16,7 +16,7 @@ const STORAGE_KEYS = {
 const DEFAULT_SETTINGS = {
   schoolName: 'MIN 2 KOTA SURABAYA',
   appName: 'CBT Mindasa',
-  schoolLogo: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=100&auto=format&fit=crop&q=80',
+  schoolLogo: 'https://blogger.googleusercontent.com/img/a/AVvXsEh3poYOGBCEzsUhSTExT1JfZ-6UyqFAK_FFwJysblERCBdzxIFHqla1b3r1jDrV3R4cejSEdmd0OpHEFcVQKFqPj__NvROSlDkg4AE4a9Jcx6G4imeLq8EldWhNOSkG2pUkdQP6DNW7UNzjIquSxNvEZGeyO_UMt3C_LZg_Xmo2PtJINIwgHjqwEMh-uws=w200',
   gdriveScriptUrl: 'https://script.google.com/macros/s/AKfycbwmZqF5a6X5kLWWJZvrxLI4bPpxeug4KSuO2Y2OWJIth_9PgG14372wmv2Yb9wacG83/exec',
   maxViolationsAllowed: 3, // Maksimal toleransi pelanggaran sebelum ujian terkunci
   enableProctoring: true, // Pantau fullscreen & tab
