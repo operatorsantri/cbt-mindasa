@@ -1,0 +1,221 @@
+// Storage Service - Mengelola persistensi data Lokal (localStorage)
+// dan sinkronisasi dengan Google Drive via Google Apps Script API
+
+import { INITIAL_USERS, INITIAL_QUESTIONS, INITIAL_EXAMS, INITIAL_RESULTS } from '../data/initialData';
+
+const STORAGE_KEYS = {
+  USERS: 'cbt_users_v1',
+  QUESTIONS: 'cbt_questions_v1',
+  EXAMS: 'cbt_exams_v1',
+  RESULTS: 'cbt_results_v1',
+  SETTINGS: 'cbt_settings_v1',
+  CURRENT_USER: 'cbt_current_user_v1',
+  EXAM_SESSION: 'cbt_active_exam_session_v1'
+};
+
+const DEFAULT_SETTINGS = {
+  schoolName: 'MIN 2 KOTA SURABAYA',
+  appName: 'CBT Mindasa',
+  schoolLogo: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=100&auto=format&fit=crop&q=80',
+  gdriveScriptUrl: 'https://script.google.com/macros/s/AKfycbwmZqF5a6X5kLWWJZvrxLI4bPpxeug4KSuO2Y2OWJIth_9PgG14372wmv2Yb9wacG83/exec',
+  maxViolationsAllowed: 3, // Maksimal toleransi pelanggaran sebelum ujian terkunci
+  enableProctoring: true, // Pantau fullscreen & tab
+  autoSaveIntervalSeconds: 10,
+  syncStatus: 'synced' // 'offline_ready' | 'synced' | 'syncing' | 'error'
+};
+
+export const storageService = {
+  // Inisialisasi awal jika storage kosong
+  init() {
+    if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.QUESTIONS)) {
+      localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(INITIAL_QUESTIONS));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.EXAMS)) {
+      localStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify(INITIAL_EXAMS));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.RESULTS)) {
+      localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(INITIAL_RESULTS));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.SETTINGS)) {
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
+    }
+  },
+
+  // Reset ke data awal (untuk demo atau restore)
+  resetToDefaults() {
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
+    localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(INITIAL_QUESTIONS));
+    localStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify(INITIAL_EXAMS));
+    localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(INITIAL_RESULTS));
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
+    localStorage.removeItem(STORAGE_KEYS.EXAM_SESSION);
+  },
+
+  // ================= USERS =================
+  getUsers() {
+    this.init();
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || INITIAL_USERS;
+    } catch {
+      return INITIAL_USERS;
+    }
+  },
+  saveUsers(users) {
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  },
+  addUser(user) {
+    const users = this.getUsers();
+    users.push(user);
+    this.saveUsers(users);
+    return user;
+  },
+  updateUser(id, updatedFields) {
+    const users = this.getUsers().map(u => u.id === id ? { ...u, ...updatedFields } : u);
+    this.saveUsers(users);
+  },
+  deleteUser(id) {
+    const users = this.getUsers().filter(u => u.id !== id);
+    this.saveUsers(users);
+  },
+
+  // ================= QUESTIONS (BANK SOAL) =================
+  getQuestions() {
+    this.init();
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.QUESTIONS)) || INITIAL_QUESTIONS;
+    } catch {
+      return INITIAL_QUESTIONS;
+    }
+  },
+  saveQuestions(questions) {
+    localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(questions));
+  },
+  addQuestion(question) {
+    const questions = this.getQuestions();
+    questions.push(question);
+    this.saveQuestions(questions);
+    return question;
+  },
+  updateQuestion(id, updatedFields) {
+    const questions = this.getQuestions().map(q => q.id === id ? { ...q, ...updatedFields } : q);
+    this.saveQuestions(questions);
+  },
+  deleteQuestion(id) {
+    const questions = this.getQuestions().filter(q => q.id !== id);
+    this.saveQuestions(questions);
+  },
+
+  // ================= EXAMS (UJIAN & TOKEN) =================
+  getExams() {
+    this.init();
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.EXAMS)) || INITIAL_EXAMS;
+    } catch {
+      return INITIAL_EXAMS;
+    }
+  },
+  saveExams(exams) {
+    localStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify(exams));
+  },
+  addExam(exam) {
+    const exams = this.getExams();
+    exams.push(exam);
+    this.saveExams(exams);
+    return exam;
+  },
+  updateExam(id, updatedFields) {
+    const exams = this.getExams().map(e => e.id === id ? { ...e, ...updatedFields } : e);
+    this.saveExams(exams);
+  },
+  deleteExam(id) {
+    const exams = this.getExams().filter(e => e.id !== id);
+    this.saveExams(exams);
+  },
+
+  // ================= RESULTS (NILAI & PELANGGARAN) =================
+  getResults() {
+    this.init();
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.RESULTS)) || INITIAL_RESULTS;
+    } catch {
+      return INITIAL_RESULTS;
+    }
+  },
+  saveResults(results) {
+    localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(results));
+  },
+  addResult(result) {
+    const results = this.getResults();
+    // Jika siswa sudah submit sebelumnya, ganti atau tambah
+    const existingIndex = results.findIndex(r => r.studentId === result.studentId && r.examId === result.examId);
+    if (existingIndex >= 0) {
+      results[existingIndex] = result;
+    } else {
+      results.unshift(result);
+    }
+    this.saveResults(results);
+    return result;
+  },
+
+  // ================= SETTINGS =================
+  getSettings() {
+    this.init();
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS) || '{}');
+      if (!saved.schoolName || saved.schoolName.includes('BINA PRESTASI')) {
+        saved.schoolName = 'MIN 2 KOTA SURABAYA';
+      }
+      if (!saved.appName) {
+        saved.appName = 'CBT Mindasa';
+      }
+      // Paksa URL Google Drive jika belum diisi atau masih kosong
+      if (!saved.gdriveScriptUrl) {
+        saved.gdriveScriptUrl = 'https://script.google.com/macros/s/AKfycbwmZqF5a6X5kLWWJZvrxLI4bPpxeug4KSuO2Y2OWJIth_9PgG14372wmv2Yb9wacG83/exec';
+      }
+      return { ...DEFAULT_SETTINGS, ...saved };
+    } catch {
+      return DEFAULT_SETTINGS;
+    }
+  },
+  saveSettings(settings) {
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+  },
+
+  // ================= AUTH CURRENT USER =================
+  getCurrentUser() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER));
+    } catch {
+      return null;
+    }
+  },
+  setCurrentUser(user) {
+    if (user) {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    }
+  },
+
+  // ================= ACTIVE EXAM SESSION (UNTUK SISWA) =================
+  getActiveExamSession() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.EXAM_SESSION));
+    } catch {
+      return null;
+    }
+  },
+  saveActiveExamSession(session) {
+    if (session) {
+      localStorage.setItem(STORAGE_KEYS.EXAM_SESSION, JSON.stringify(session));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.EXAM_SESSION);
+    }
+  },
+  clearActiveExamSession() {
+    localStorage.removeItem(STORAGE_KEYS.EXAM_SESSION);
+  }
+};
