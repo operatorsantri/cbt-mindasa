@@ -11,14 +11,15 @@ export const gdriveService = {
     if (!scriptUrl || !scriptUrl.startsWith('https://script.google.com/macros/s/')) {
       return {
         success: false,
-        message: 'Format URL Google Apps Script tidak valid. Harus diawali dengan https://script.google.com/macros/s/.../exec'
+        message: 'Format URL tidak valid. Harus diawali dengan https://script.google.com/macros/s/.../exec'
       };
     }
 
     try {
       const response = await fetch(`${scriptUrl}?action=ping`, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        redirect: 'follow'
+        // Tidak pakai custom headers agar tidak trigger CORS preflight
       });
 
       if (!response.ok) {
@@ -28,15 +29,14 @@ export const gdriveService = {
       const data = await response.json();
       return {
         success: true,
-        message: data.message || 'Koneksi ke Google Drive & Sheets berhasil terhubung!',
+        message: data.message || 'Koneksi ke Google Drive berhasil!',
         data
       };
     } catch (err) {
-      console.warn('Test connection error (mungkin CORS atau URL belum deploy Siapa Saja):', err);
-      // Fallback message untuk Google Apps Script
+      console.warn('Test connection error:', err);
       return {
         success: false,
-        message: `Gagal terhubung ke Google Drive. Pastikan Web App di-deploy dengan akses "Anyone" (Siapa Saja). Error: ${err.message}`
+        message: `Gagal terhubung. Pastikan Apps Script di-deploy ulang dengan akses "Anyone" (Siapa Saja, termasuk tanpa akun). Error: ${err.message}`
       };
     }
   },
