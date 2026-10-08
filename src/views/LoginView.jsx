@@ -50,7 +50,7 @@ export function LoginView({ onLogin, users = [], settings }) {
         {/* Logo Resmi MIN 2 Kota Surabaya */}
         <div className="flex justify-center mb-4">
           <img
-            src={settings?.schoolLogo || 'https://blogger.googleusercontent.com/img/a/AVvXsEh3poYOGBCEzsUhSTExT1JfZ-6UyqFAK_FFwJysblERCBdzxIFHqla1b3r1jDrV3R4cejSEdmd0OpHEFcVQKFqPj__NvROSlDkg4AE4a9Jcx6G4imeLq8EldWhNOSkG2pUkdQP6DNW7UNzjIquSxNvEZGeyO_UMt3C_LZg_Xmo2PtJINIwgHjqwEMh-uws=w200'}
+            src={settings?.schoolLogo || './logo-min2.png'}
             alt="Logo MIN 2 Kota Surabaya"
             className="w-24 h-24 object-contain drop-shadow-lg"
           />
