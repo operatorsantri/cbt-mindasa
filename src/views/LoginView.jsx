@@ -47,6 +47,15 @@ export function LoginView({ onLogin, users = [], settings }) {
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-100 via-blue-50/50 to-indigo-50/40">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         
+        {/* Logo Resmi MIN 2 Kota Surabaya */}
+        <div className="flex justify-center mb-4">
+          <img
+            src={settings?.schoolLogo || 'https://blogger.googleusercontent.com/img/a/AVvXsEh3poYOGBCEzsUhSTExT1JfZ-6UyqFAK_FFwJysblERCBdzxIFHqla1b3r1jDrV3R4cejSEdmd0OpHEFcVQKFqPj__NvROSlDkg4AE4a9Jcx6G4imeLq8EldWhNOSkG2pUkdQP6DNW7UNzjIquSxNvEZGeyO_UMt3C_LZg_Xmo2PtJINIwgHjqwEMh-uws=w200'}
+            alt="Logo MIN 2 Kota Surabaya"
+            className="w-24 h-24 object-contain drop-shadow-lg"
+          />
+        </div>
+
         {/* CBT Badge */}
         <div className="inline-flex items-center space-x-2 bg-green-100/80 text-green-800 text-xs font-semibold px-3 py-1 rounded-full mb-3 shadow-xs border border-green-200">
           <Sparkles className="w-3.5 h-3.5 text-green-600" />
