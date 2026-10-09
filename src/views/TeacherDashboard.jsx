@@ -31,9 +31,18 @@ export function TeacherDashboard({
   exams = [], 
   onSaveExams, 
   results = [],
-  settings 
+  settings,
+  subjects = [],
+  onSaveSubjects
 }) {
   const [activeTab, setActiveTab] = useState('soal'); // 'soal' | 'ujian' | 'nilai' | 'analisis'
+
+  // Toggle Ujian Aktif / Nonaktif oleh Guru
+  const handleToggleExamActive = (examId) => {
+    if (!onSaveExams) return;
+    const updated = exams.map(e => e.id === examId ? { ...e, isActive: e.isActive === false ? true : false } : e);
+    onSaveExams(updated);
+  };
   
   // Filter state untuk Soal
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -90,7 +99,7 @@ export function TeacherDashboard({
   // Helper buka form tambah soal
   const handleOpenAddQuestion = () => {
     setEditingQuestion(null);
-    setFormCategory('Literasi & Bahasa');
+    setFormCategory(subjects[0] || 'Matematika');
     setFormType('pg');
     setFormQuestion('');
     setFormWeight(10);
@@ -287,16 +296,16 @@ export function TeacherDashboard({
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex flex-wrap items-center gap-2">
               
-              {/* Filter Kategori */}
+              {/* Filter Kategori / Mapel */}
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 className="p-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-700"
               >
-                <option value="all">Semua Kategori</option>
-                <option value="Literasi & Bahasa">Literasi & Bahasa</option>
-                <option value="Numerasi & Logika">Numerasi & Logika</option>
-                <option value="Sains & Teknologi">Sains & Teknologi</option>
+                <option value="all">Semua Mata Pelajaran / Kategori</option>
+                {subjects.map((sub, i) => (
+                  <option key={i} value={sub}>{sub}</option>
+                ))}
               </select>
 
               {/* Filter Model Soal */}
@@ -344,8 +353,12 @@ export function TeacherDashboard({
                 <tbody className="divide-y divide-slate-100">
                   {filteredQuestions.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400">
-                        Tidak ada soal yang sesuai dengan filter.
+                      <td colSpan={6} className="py-12 text-center text-slate-400">
+                        <BookOpen className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                        <div className="font-semibold text-slate-600">Bank Soal Masih Kosong (0 Butir)</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          Klik tombol <strong>"+ Tambah Butir Soal"</strong> di pojok kanan atas untuk mulai menginput soal baru.
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -411,19 +424,41 @@ export function TeacherDashboard({
                   <p className="text-xs text-slate-500">Durasi: {ex.durationMinutes} Menit | Toleransi Pelanggaran: {ex.maxViolations || 3}x</p>
                 </div>
 
-                {/* Token Box */}
-                <div className="flex items-center space-x-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                  <div className="text-right">
-                    <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Token Ujian Siswa</div>
-                    <div className="text-2xl font-mono font-black text-blue-700 tracking-wider">{ex.token}</div>
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Status Toggle Ujian Aktif/Nonaktif */}
+                  <div className="flex items-center space-x-2.5 bg-slate-50 px-3.5 py-2 rounded-2xl border border-slate-200">
+                    <div className="text-right">
+                      <div className="text-[10px] text-slate-400 font-bold uppercase">Status Ujian</div>
+                      <div className={`text-xs font-black ${ex.isActive !== false ? 'text-emerald-700' : 'text-slate-500'}`}>
+                        {ex.isActive !== false ? '🟢 DIBUKA' : '⚪ DITUTUP'}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleExamActive(ex.id)}
+                      className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
+                        ex.isActive !== false ? 'bg-emerald-600 justify-end' : 'bg-slate-300 justify-start'
+                      }`}
+                      title={ex.isActive !== false ? 'Klik untuk Tutup/Nonaktifkan Ujian' : 'Klik untuk Buka/Aktifkan Ujian'}
+                    >
+                      <div className="w-4 h-4 rounded-full bg-white shadow-xs"></div>
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleGenerateToken(ex.id)}
-                    className="p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer"
-                    title="Buat Token Baru"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                  </button>
+
+                  {/* Token Box */}
+                  <div className="flex items-center space-x-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
+                    <div className="text-right">
+                      <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Token Siswa</div>
+                      <div className="text-xl font-mono font-black text-blue-700 tracking-wider">{ex.token}</div>
+                    </div>
+                    <button
+                      onClick={() => handleGenerateToken(ex.id)}
+                      className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer"
+                      title="Buat Token Baru"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -735,15 +770,16 @@ export function TeacherDashboard({
               
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Kategori</label>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">Mata Pelajaran / Kategori</label>
                   <select
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold"
                   >
-                    <option value="Literasi & Bahasa">Literasi & Bahasa</option>
-                    <option value="Numerasi & Logika">Numerasi & Logika</option>
-                    <option value="Sains & Teknologi">Sains & Teknologi</option>
+                    {subjects.map((sub, i) => (
+                      <option key={i} value={sub}>{sub}</option>
+                    ))}
+                    <option value="Umum">Umum / Lainnya</option>
                   </select>
                 </div>
 
