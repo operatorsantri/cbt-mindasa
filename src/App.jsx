@@ -17,6 +17,7 @@ export function App() {
   const [exams, setExams] = useState([]);
   const [results, setResults] = useState([]);
   const [settings, setSettings] = useState({});
+  const [subjects, setSubjects] = useState([]);
   const [syncStatus, setSyncStatus] = useState('idle'); // 'idle' | 'syncing' | 'done' | 'error'
 
   // State Ujian Berjalan
@@ -31,6 +32,7 @@ export function App() {
     setExams(storageService.getExams());
     setResults(storageService.getResults());
     setSettings(storageService.getSettings());
+    setSubjects(storageService.getSubjects());
   };
 
   // Inisialisasi: load localStorage, lalu auto-sync dari Google Drive
@@ -122,6 +124,12 @@ export function App() {
     storageService.saveSettings(newSettings);
   };
 
+  // Save Subjects update (Mapel yang dibuat/dikelola guru)
+  const handleSaveSubjects = (newSubjects) => {
+    setSubjects(newSubjects);
+    storageService.saveSubjects(newSubjects);
+  };
+
   // Reset Data to defaults
   const handleResetData = () => {
     if (window.confirm('Reset semua data kembali ke default bawaan?')) {
@@ -131,6 +139,7 @@ export function App() {
       setExams(storageService.getExams());
       setResults(storageService.getResults());
       setSettings(storageService.getSettings());
+      setSubjects(storageService.getSubjects());
       setActiveExam(null);
       setViewSummaryResult(null);
     }
@@ -205,6 +214,8 @@ export function App() {
             onSaveExams={handleSaveExams}
             results={results}
             settings={settings}
+            subjects={subjects}
+            onSaveSubjects={handleSaveSubjects}
           />
         )}
 
@@ -215,10 +226,14 @@ export function App() {
             users={users}
             onSaveUsers={handleSaveUsers}
             questions={questions}
+            onSaveQuestions={handleSaveQuestions}
             exams={exams}
+            onSaveExams={handleSaveExams}
             results={results}
             settings={settings}
             onSaveSettings={handleSaveSettings}
+            subjects={subjects}
+            onSaveSubjects={handleSaveSubjects}
           />
         )}
 
