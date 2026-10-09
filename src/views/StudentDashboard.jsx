@@ -183,10 +183,13 @@ export function StudentDashboard({
                 <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
                     <div>
-                      <span className="text-xs font-bold text-blue-600 uppercase tracking-wider bg-blue-50 px-2.5 py-1 rounded-md">
-                        {selectedExam.subject}
-                      </span>
-                      <h2 className="text-xl font-bold text-slate-900 mt-2">
+                      <div className="inline-flex items-center space-x-2 bg-blue-100/80 border border-blue-200 px-3 py-1 rounded-lg mb-2">
+                        <BookOpen className="w-4 h-4 text-blue-700" />
+                        <span className="text-xs font-black text-blue-900 uppercase tracking-wider">
+                          Mata Pelajaran: {selectedExam.subject}
+                        </span>
+                      </div>
+                      <h2 className="text-xl font-black text-slate-900">
                         {selectedExam.title}
                       </h2>
                     </div>
@@ -332,7 +335,13 @@ export function StudentDashboard({
                       </div>
                     )}
 
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1.5">
+                      <div className="flex justify-between items-center pb-1.5 border-b border-slate-200">
+                        <span className="font-semibold text-slate-500">Mata Pelajaran:</span>
+                        <strong className="text-blue-800 font-bold bg-blue-100/70 px-2 py-0.5 rounded text-xs">
+                          {selectedExam.subject}
+                        </strong>
+                      </div>
                       <div className="flex justify-between">
                         <span>Nama Peserta:</span>
                         <strong className="text-slate-800">{currentUser.name}</strong>
