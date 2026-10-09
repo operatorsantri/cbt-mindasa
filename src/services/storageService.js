@@ -1,7 +1,7 @@
 // Storage Service - Mengelola persistensi data Lokal (localStorage)
 // dan sinkronisasi dengan Google Drive via Google Apps Script API
 
-import { INITIAL_USERS, INITIAL_QUESTIONS, INITIAL_EXAMS, INITIAL_RESULTS } from '../data/initialData';
+import { INITIAL_USERS, INITIAL_QUESTIONS, INITIAL_EXAMS, INITIAL_RESULTS, INITIAL_SUBJECTS } from '../data/initialData';
 
 const STORAGE_KEYS = {
   USERS: 'cbt_users_v1',
@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   EXAMS: 'cbt_exams_v1',
   RESULTS: 'cbt_results_v1',
   SETTINGS: 'cbt_settings_v1',
+  SUBJECTS: 'cbt_subjects_v1',
   CURRENT_USER: 'cbt_current_user_v1',
   EXAM_SESSION: 'cbt_active_exam_session_v1'
 };
@@ -30,8 +31,10 @@ export const storageService = {
     if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
       localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
     }
-    if (!localStorage.getItem(STORAGE_KEYS.QUESTIONS)) {
-      localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(INITIAL_QUESTIONS));
+    // Jika belum ada questions atau berisi data demo lama 'q-101', kosongkan!
+    const existingQ = localStorage.getItem(STORAGE_KEYS.QUESTIONS);
+    if (!existingQ || existingQ.includes('q-101') || existingQ.includes('Hutan mangrove')) {
+      localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify([]));
     }
     if (!localStorage.getItem(STORAGE_KEYS.EXAMS)) {
       localStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify(INITIAL_EXAMS));
@@ -42,16 +45,46 @@ export const storageService = {
     if (!localStorage.getItem(STORAGE_KEYS.SETTINGS)) {
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
     }
+    if (!localStorage.getItem(STORAGE_KEYS.SUBJECTS)) {
+      localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(INITIAL_SUBJECTS));
+    }
   },
 
   // Reset ke data awal (untuk demo atau restore)
   resetToDefaults() {
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
-    localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(INITIAL_QUESTIONS));
+    localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify([]));
     localStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify(INITIAL_EXAMS));
     localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(INITIAL_RESULTS));
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
+    localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(INITIAL_SUBJECTS));
     localStorage.removeItem(STORAGE_KEYS.EXAM_SESSION);
+  },
+
+  // ================= SUBJECTS (MATA PELAJARAN) =================
+  getSubjects() {
+    this.init();
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBJECTS)) || INITIAL_SUBJECTS;
+    } catch {
+      return INITIAL_SUBJECTS;
+    }
+  },
+  saveSubjects(subjects) {
+    localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(subjects));
+  },
+  addSubject(subject) {
+    const subjects = this.getSubjects();
+    if (!subjects.includes(subject)) {
+      subjects.push(subject);
+      this.saveSubjects(subjects);
+    }
+    return subjects;
+  },
+  deleteSubject(subject) {
+    const subjects = this.getSubjects().filter(s => s !== subject);
+    this.saveSubjects(subjects);
+    return subjects;
   },
 
   // ================= USERS =================
