@@ -68,6 +68,12 @@ export function AdminDashboard({
   // State Mata Pelajaran (Mapel)
   const [newSubjectInput, setNewSubjectInput] = useState('');
 
+  // State Modal Buat Ujian Baru (Admin)
+  const [isExamModalOpen, setIsExamModalOpen] = useState(false);
+  const [examTitleInput, setExamTitleInput] = useState('');
+  const [examSubjectInput, setExamSubjectInput] = useState('');
+  const [examDurationInput, setExamDurationInput] = useState(60);
+
   // Toggle Ujian Aktif / Tidak Aktif oleh Admin
   const handleToggleExamActive = (examId) => {
     if (!onSaveExams) return;
@@ -78,6 +84,53 @@ export function AdminDashboard({
       return e;
     });
     onSaveExams(updated);
+  };
+
+  // Hapus Ujian (Admin)
+  const handleDeleteExam = (examId) => {
+    if (window.confirm('Yakin ingin menghapus jadwal ujian ini? Data tidak bisa dikembalikan.')) {
+      const updated = exams.filter(e => e.id !== examId);
+      if (onSaveExams) onSaveExams(updated);
+    }
+  };
+
+  // Buka Modal Buat Ujian
+  const handleOpenAddExam = () => {
+    setExamTitleInput('');
+    setExamSubjectInput(subjects[0] || 'Matematika');
+    setExamDurationInput(60);
+    setIsExamModalOpen(true);
+  };
+
+  // Simpan Ujian Baru (Admin)
+  const handleSaveExamSubmit = (e) => {
+    e.preventDefault();
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let randToken = '';
+    for (let i = 0; i < 6; i++) {
+      randToken += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const newExam = {
+      id: `exam-${Date.now()}`,
+      title: examTitleInput.trim(),
+      subject: examSubjectInput.trim(),
+      token: randToken,
+      durationMinutes: Number(examDurationInput) || 60,
+      maxViolations: 3,
+      categories: [examSubjectInput.trim()],
+      shuffleQuestionsByCategory: true,
+      shuffleOptions: true,
+      isActive: true,
+      instructions: [
+        'Gunakan koneksi internet stabil.',
+        'Sistem akan otomatis masuk ke Mode Layar Penuh (Fullscreen).',
+        'DILARANG membuka tab lain atau meminimalisir layar.',
+        'Setiap pelanggaran akan dicatat otomatis.'
+      ]
+    };
+    const updated = [...exams, newExam];
+    if (onSaveExams) onSaveExams(updated);
+    setIsExamModalOpen(false);
   };
 
   // Tambah Mapel Baru
@@ -507,15 +560,27 @@ export function AdminDashboard({
                 Aktifkan ujian agar siswa dapat memasukkan token dan mulai mengerjakan, atau nonaktifkan jika ujian selesai/ditutup.
               </p>
             </div>
-            <div className="text-xs font-bold px-3 py-1 bg-purple-50 text-purple-700 rounded-xl border border-purple-200">
-              Total {exams.length} Jadwal Ujian
+            <div className="flex items-center gap-2">
+              <div className="text-xs font-bold px-3 py-1 bg-purple-50 text-purple-700 rounded-xl border border-purple-200">
+                Total {exams.length} Jadwal
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenAddExam}
+                className="flex items-center space-x-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer shadow-xs transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Buat Ujian Baru</span>
+              </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
             {exams.length === 0 ? (
               <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-400">
-                Belum ada jadwal ujian yang dibuat oleh Guru atau Admin.
+                <Calendar className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                <p className="font-bold text-slate-500 mb-1">Belum Ada Jadwal Ujian</p>
+                <p className="text-xs">Klik "Buat Ujian Baru" untuk membuat jadwal ujian pertama.</p>
               </div>
             ) : (
               exams.map((ex) => {
@@ -523,10 +588,10 @@ export function AdminDashboard({
                 return (
                   <div key={ex.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                      <div>
-                        <div className="flex items-center space-x-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center flex-wrap gap-2">
                           <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-md">
-                            {ex.subject}
+                            📚 {ex.subject || 'Belum Ada Mapel'}
                           </span>
                           <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center space-x-1.5 ${
                             isAct 
@@ -534,33 +599,45 @@ export function AdminDashboard({
                               : 'bg-slate-100 text-slate-600'
                           }`}>
                             <span className={`w-2 h-2 rounded-full ${isAct ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
-                            <span>{isAct ? '🟢 Status: AKTIF (Bisa Dikerjakan Siswa)' : '⚪ Status: TIDAK AKTIF (Terkunci)'}</span>
+                            <span>{isAct ? '🟢 AKTIF' : '⚪ TIDAK AKTIF'}</span>
                           </span>
                         </div>
                         <h4 className="text-base font-bold text-slate-900 mt-1">{ex.title}</h4>
                         <p className="text-xs text-slate-500 mt-0.5">
-                          Durasi: <strong>{ex.durationMinutes} Menit</strong> | Token: <strong className="font-mono text-purple-700">{ex.token}</strong> | Toleransi Pelanggaran: <strong>{ex.maxViolations || 3}x</strong>
+                          Durasi: <strong>{ex.durationMinutes} Menit</strong> | Token: <strong className="font-mono text-purple-700 text-sm">{ex.token}</strong> | Toleransi: <strong>{ex.maxViolations || 3}x pelanggaran</strong>
                         </p>
                       </div>
 
-                      {/* Tombol Toggle Saklar Status Aktif / Nonaktif */}
-                      <div className="flex items-center space-x-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 self-start sm:self-auto">
-                        <div className="text-right">
-                          <div className="text-[10px] text-slate-400 font-bold uppercase">Status Ujian</div>
-                          <div className={`text-xs font-black ${isAct ? 'text-emerald-700' : 'text-slate-500'}`}>
-                            {isAct ? 'DIBUKA' : 'DITUTUP'}
-                          </div>
-                        </div>
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
+                        {/* Tombol Hapus Ujian */}
                         <button
                           type="button"
-                          onClick={() => handleToggleExamActive(ex.id)}
-                          className={`w-14 h-7 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
-                            isAct ? 'bg-emerald-600 justify-end' : 'bg-slate-300 justify-start'
-                          }`}
-                          title={isAct ? 'Klik untuk Menonaktifkan Ujian' : 'Klik untuk Mengaktifkan Ujian'}
+                          onClick={() => handleDeleteExam(ex.id)}
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                          title="Hapus Ujian"
                         >
-                          <div className="w-5 h-5 rounded-full bg-white shadow-md"></div>
+                          <Trash2 className="w-4 h-4" />
                         </button>
+
+                        {/* Tombol Toggle Saklar Status Aktif / Nonaktif */}
+                        <div className="flex items-center space-x-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
+                          <div className="text-right">
+                            <div className="text-[10px] text-slate-400 font-bold uppercase">Status</div>
+                            <div className={`text-xs font-black ${isAct ? 'text-emerald-700' : 'text-slate-500'}`}>
+                              {isAct ? 'DIBUKA' : 'DITUTUP'}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleExamActive(ex.id)}
+                            className={`w-14 h-7 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
+                              isAct ? 'bg-emerald-600 justify-end' : 'bg-slate-300 justify-start'
+                            }`}
+                            title={isAct ? 'Klik untuk Menonaktifkan Ujian' : 'Klik untuk Mengaktifkan Ujian'}
+                          >
+                            <div className="w-5 h-5 rounded-full bg-white shadow-md"></div>
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -580,6 +657,7 @@ export function AdminDashboard({
           </div>
         </div>
       )}
+
 
       {/* ================= TAB: SETTING MATA PELAJARAN (MAPEL) ================= */}
       {activeTab === 'subjects' && (
