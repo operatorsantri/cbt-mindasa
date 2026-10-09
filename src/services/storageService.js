@@ -17,7 +17,7 @@ const DEFAULT_SETTINGS = {
   schoolName: 'MIN 2 KOTA SURABAYA',
   appName: 'CBT Mindasa',
   schoolLogo: './logo-min2.png',
-  gdriveScriptUrl: 'https://script.google.com/macros/s/AKfycbwmZqF5a6X5kLWWJZvrxLI4bPpxeug4KSuO2Y2OWJIth_9PgG14372wmv2Yb9wacG83/exec',
+  gdriveScriptUrl: 'https://script.google.com/macros/s/AKfycbzfAcWRNpyi3ZAiY7uTZzqo-B88NWYLyD_THbTRAF3t83KCVcIJXNeRzwqnlxLVqreE/exec',
   maxViolationsAllowed: 3, // Maksimal toleransi pelanggaran sebelum ujian terkunci
   enableProctoring: true, // Pantau fullscreen & tab
   autoSaveIntervalSeconds: 10,
@@ -176,8 +176,8 @@ export const storageService = {
         saved.schoolLogo = './logo-min2.png';
       }
       // Paksa URL Google Drive jika belum diisi atau masih kosong
-      if (!saved.gdriveScriptUrl) {
-        saved.gdriveScriptUrl = 'https://script.google.com/macros/s/AKfycbwmZqF5a6X5kLWWJZvrxLI4bPpxeug4KSuO2Y2OWJIth_9PgG14372wmv2Yb9wacG83/exec';
+      if (!saved.gdriveScriptUrl || saved.gdriveScriptUrl.includes('AKfycbwmZqF5')) {
+        saved.gdriveScriptUrl = 'https://script.google.com/macros/s/AKfycbzfAcWRNpyi3ZAiY7uTZzqo-B88NWYLyD_THbTRAF3t83KCVcIJXNeRzwqnlxLVqreE/exec';
       }
       return { ...DEFAULT_SETTINGS, ...saved };
     } catch {
