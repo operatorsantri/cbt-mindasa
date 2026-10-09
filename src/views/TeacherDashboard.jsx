@@ -88,6 +88,56 @@ export function TeacherDashboard({
   ]);
   const [formCorrectBS, setFormCorrectBS] = useState({ 'S1': true, 'S2': false });
 
+  // Modal Buat Jadwal Ujian Baru oleh Guru
+  const [isExamModalOpen, setIsExamModalOpen] = useState(false);
+  const [examTitleInput, setExamTitleInput] = useState('');
+  const [examSubjectInput, setExamSubjectInput] = useState('');
+  const [examDurationInput, setExamDurationInput] = useState(60);
+
+  const handleOpenAddExam = () => {
+    setExamTitleInput('');
+    setExamSubjectInput(currentUser?.subject || subjects[0] || 'Matematika');
+    setExamDurationInput(60);
+    setIsExamModalOpen(true);
+  };
+
+  const handleSaveExamSubmit = (e) => {
+    e.preventDefault();
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let randToken = '';
+    for (let i = 0; i < 6; i++) {
+      randToken += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const newExam = {
+      id: `exam-${Date.now()}`,
+      title: examTitleInput.trim(),
+      subject: examSubjectInput.trim(),
+      token: randToken,
+      durationMinutes: Number(examDurationInput) || 60,
+      maxViolations: 3,
+      categories: [examSubjectInput.trim()],
+      shuffleQuestionsByCategory: true,
+      shuffleOptions: true,
+      isActive: true,
+      instructions: [
+        'Gunakan koneksi internet stabil.',
+        'Sistem akan otomatis masuk ke Mode Layar Penuh (Fullscreen).',
+        'DILARANG membuka tab lain atau meminimalisir layar.',
+        'Setiap pelanggaran akan dicatat otomatis.'
+      ]
+    };
+    const updated = [...exams, newExam];
+    onSaveExams(updated);
+    setIsExamModalOpen(false);
+  };
+
+  const handleDeleteExam = (examId) => {
+    if (window.confirm('Yakin ingin menghapus jadwal ujian ini?')) {
+      const updated = exams.filter(e => e.id !== examId);
+      onSaveExams(updated);
+    }
+  };
+
   // Modal Pelanggaran Siswa (guru membaca pelanggaran siswa tertentu)
   const [selectedStudentViolations, setSelectedStudentViolations] = useState([]);
   const [selectedStudentName, setSelectedStudentName] = useState('');
@@ -413,13 +463,31 @@ export function TeacherDashboard({
       {/* ================= TAB 2: PENGACAKAN & TOKEN UJIAN ================= */}
       {activeTab === 'ujian' && (
         <div className="space-y-6">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-slate-900 text-sm">Jadwal & Token Ujian CBT</h3>
+              <p className="text-xs text-slate-500">
+                Pilih mata pelajaran yang diujikan, atur durasi, aktifkan status ujian, dan acak token untuk siswa.
+              </p>
+            </div>
+            <button
+              onClick={handleOpenAddExam}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Buat Jadwal Ujian Baru</span>
+            </button>
+          </div>
+
           {exams.map(ex => (
             <div key={ex.id} className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
                 <div>
-                  <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-md">
-                    {ex.subject}
-                  </span>
+                  <div className="flex items-center space-x-2 mb-1">
+                    <span className="text-xs font-black text-blue-700 bg-blue-100 px-3 py-1 rounded-md">
+                      Mata Pelajaran: {ex.subject}
+                    </span>
+                  </div>
                   <h3 className="text-lg font-bold text-slate-900 mt-1">{ex.title}</h3>
                   <p className="text-xs text-slate-500">Durasi: {ex.durationMinutes} Menit | Toleransi Pelanggaran: {ex.maxViolations || 3}x</p>
                 </div>
@@ -457,6 +525,13 @@ export function TeacherDashboard({
                       title="Buat Token Baru"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteExam(ex.id)}
+                      className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                      title="Hapus Jadwal Ujian"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -990,6 +1065,78 @@ export function TeacherDashboard({
         </div>
       )}
 
+      {/* MODAL BUAT JADWAL UJIAN BARU OLEH GURU */}
+      {isExamModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+            <h3 className="text-base font-bold text-slate-900 pb-3 border-b border-slate-200 flex items-center space-x-2">
+              <Calendar className="w-5 h-5 text-blue-600" />
+              <span>Buat Jadwal Ujian Baru</span>
+            </h3>
+
+            <form onSubmit={handleSaveExamSubmit} className="space-y-3.5 mt-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">Mata Pelajaran yang Diujikan</label>
+                <select
+                  value={examSubjectInput}
+                  onChange={(e) => setExamSubjectInput(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-blue-800"
+                >
+                  {subjects.map((sub, i) => (
+                    <option key={i} value={sub}>{sub}</option>
+                  ))}
+                  <option value="Umum">Umum / Terpadu</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">Nama / Judul Ujian</label>
+                <input
+                  type="text"
+                  required
+                  value={examTitleInput}
+                  onChange={(e) => setExamTitleInput(e.target.value)}
+                  placeholder="Contoh: Ulangan Harian Bab 1 / Penilaian Akhir Semester"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">Durasi Pengerjaan (Menit)</label>
+                <input
+                  type="number"
+                  required
+                  min="5"
+                  max="300"
+                  value={examDurationInput}
+                  onChange={(e) => setExamDurationInput(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"
+                />
+              </div>
+
+              <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 text-blue-800 text-[11px]">
+                ℹ️ Sistem otomatis membuat 6 karakter token acak untuk siswa dan langsung mengaktifkan jadwal ujian ini.
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setIsExamModalOpen(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold cursor-pointer"
+                >
+                  Simpan Jadwal Ujian
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
