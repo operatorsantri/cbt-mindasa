@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { storageService } from './services/storageService';
+import { gdriveService } from './services/gdriveService';
 import { prepareExamQuestions } from './utils/shuffle';
 import { Navbar } from './components/Navbar';
 import { LoginView } from './views/LoginView';
@@ -16,24 +17,45 @@ export function App() {
   const [exams, setExams] = useState([]);
   const [results, setResults] = useState([]);
   const [settings, setSettings] = useState({});
+  const [syncStatus, setSyncStatus] = useState('idle'); // 'idle' | 'syncing' | 'done' | 'error'
 
   // State Ujian Berjalan
   const [activeExam, setActiveExam] = useState(null);
   const [activePreparedQuestions, setActivePreparedQuestions] = useState([]);
   const [viewSummaryResult, setViewSummaryResult] = useState(null);
 
-  // Inisialisasi data dari localStorage
-  useEffect(() => {
-    storageService.init();
+  // Helper: reload semua data dari localStorage ke state
+  const reloadDataFromStorage = () => {
     setUsers(storageService.getUsers());
     setQuestions(storageService.getQuestions());
     setExams(storageService.getExams());
     setResults(storageService.getResults());
     setSettings(storageService.getSettings());
+  };
+
+  // Inisialisasi: load localStorage, lalu auto-sync dari Google Drive
+  useEffect(() => {
+    storageService.init();
+    reloadDataFromStorage();
 
     const savedUser = storageService.getCurrentUser();
-    if (savedUser) {
-      setCurrentUser(savedUser);
+    if (savedUser) setCurrentUser(savedUser);
+
+    // Auto-sync dari Google Drive saat pertama buka (ambil soal & data terbaru)
+    const cfg = storageService.getSettings();
+    if (cfg.gdriveScriptUrl) {
+      setSyncStatus('syncing');
+      gdriveService.pullDataFromDrive(cfg.gdriveScriptUrl)
+        .then(() => {
+          reloadDataFromStorage();
+          setSyncStatus('done');
+          // Reset status setelah 3 detik
+          setTimeout(() => setSyncStatus('idle'), 3000);
+        })
+        .catch(() => {
+          setSyncStatus('error');
+          setTimeout(() => setSyncStatus('idle'), 4000);
+        });
     }
   }, []);
 
