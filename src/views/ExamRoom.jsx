@@ -327,10 +327,13 @@ export function ExamRoom({
               {currentIndex + 1}
             </div>
             <div>
-              <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">
-                {exam.subject}
+              <div className="flex items-center space-x-1.5">
+                <span className="text-[11px] font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded uppercase tracking-wider">
+                  {exam.subject}
+                </span>
+                <span className="text-xs text-slate-500 font-medium hidden sm:inline">• {exam.title}</span>
               </div>
-              <div className="text-sm font-bold text-slate-800 flex items-center space-x-2">
+              <div className="text-sm font-bold text-slate-800 flex items-center space-x-2 mt-0.5">
                 <span>Soal No. {currentIndex + 1} dari {questions.length}</span>
               </div>
             </div>
