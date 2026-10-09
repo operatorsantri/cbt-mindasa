@@ -16,11 +16,15 @@ import {
   Copy, 
   Check, 
   ExternalLink,
-  BookOpen,
   FileText,
   Eye,
   EyeOff,
-  Key
+  Key,
+  Calendar,
+  Play,
+  XCircle,
+  Shuffle,
+  Clock
 } from 'lucide-react';
 import { gdriveService } from '../services/gdriveService';
 import { storageService } from '../services/storageService';
@@ -30,12 +34,16 @@ export function AdminDashboard({
   users = [], 
   onSaveUsers, 
   questions = [], 
+  onSaveQuestions,
   exams = [], 
+  onSaveExams,
   results = [], 
   settings = {}, 
-  onSaveSettings 
+  onSaveSettings,
+  subjects = [],
+  onSaveSubjects
 }) {
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'users' | 'gdrive' | 'settings'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'users' | 'exams' | 'subjects' | 'gdrive' | 'settings'
 
   // State Pengaturan Google Drive
   const [gdriveUrl, setGdriveUrl] = useState(settings?.gdriveScriptUrl || '');
@@ -56,6 +64,43 @@ export function AdminDashboard({
   const [userClass, setUserClass] = useState('');
   const [userSubject, setUserSubject] = useState('');
   const [showPasswordMap, setShowPasswordMap] = useState({});
+
+  // State Mata Pelajaran (Mapel)
+  const [newSubjectInput, setNewSubjectInput] = useState('');
+
+  // Toggle Ujian Aktif / Tidak Aktif oleh Admin
+  const handleToggleExamActive = (examId) => {
+    if (!onSaveExams) return;
+    const updated = exams.map(e => {
+      if (e.id === examId) {
+        return { ...e, isActive: e.isActive === false ? true : false };
+      }
+      return e;
+    });
+    onSaveExams(updated);
+  };
+
+  // Tambah Mapel Baru
+  const handleAddSubject = (e) => {
+    e.preventDefault();
+    const clean = newSubjectInput.trim();
+    if (!clean) return;
+    if (subjects.includes(clean)) {
+      alert('Mata pelajaran ini sudah ada dalam daftar.');
+      return;
+    }
+    const updated = [...subjects, clean];
+    if (onSaveSubjects) onSaveSubjects(updated);
+    setNewSubjectInput('');
+  };
+
+  // Hapus Mapel
+  const handleDeleteSubject = (subj) => {
+    if (window.confirm(`Hapus mata pelajaran "${subj}" dari daftar?`)) {
+      const updated = subjects.filter(s => s !== subj);
+      if (onSaveSubjects) onSaveSubjects(updated);
+    }
+  };
 
   const toggleShowPassword = (userId) => {
     setShowPasswordMap(prev => ({
@@ -245,6 +290,30 @@ export function AdminDashboard({
         </button>
 
         <button
+          onClick={() => setActiveTab('exams')}
+          className={`pb-3 text-sm font-bold flex items-center space-x-2 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+            activeTab === 'exams'
+              ? 'border-purple-600 text-purple-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          <span>Jadwal & Status Ujian ({exams.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('subjects')}
+          className={`pb-3 text-sm font-bold flex items-center space-x-2 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+            activeTab === 'subjects'
+              ? 'border-purple-600 text-purple-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span>Mata Pelajaran ({subjects.length})</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('gdrive')}
           className={`pb-3 text-sm font-bold flex items-center space-x-2 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
             activeTab === 'gdrive'
@@ -423,6 +492,147 @@ export function AdminDashboard({
                   })}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= TAB: KELOLA JADWAL & STATUS UJIAN (AKTIF / TIDAK) ================= */}
+      {activeTab === 'exams' && (
+        <div className="space-y-4">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-slate-900 text-sm">Pengaturan Status Ujian CBT</h3>
+              <p className="text-xs text-slate-500">
+                Aktifkan ujian agar siswa dapat memasukkan token dan mulai mengerjakan, atau nonaktifkan jika ujian selesai/ditutup.
+              </p>
+            </div>
+            <div className="text-xs font-bold px-3 py-1 bg-purple-50 text-purple-700 rounded-xl border border-purple-200">
+              Total {exams.length} Jadwal Ujian
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {exams.length === 0 ? (
+              <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-400">
+                Belum ada jadwal ujian yang dibuat oleh Guru atau Admin.
+              </div>
+            ) : (
+              exams.map((ex) => {
+                const isAct = ex.isActive !== false;
+                return (
+                  <div key={ex.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-md">
+                            {ex.subject}
+                          </span>
+                          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center space-x-1.5 ${
+                            isAct 
+                              ? 'bg-emerald-100 text-emerald-800' 
+                              : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            <span className={`w-2 h-2 rounded-full ${isAct ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                            <span>{isAct ? '🟢 Status: AKTIF (Bisa Dikerjakan Siswa)' : '⚪ Status: TIDAK AKTIF (Terkunci)'}</span>
+                          </span>
+                        </div>
+                        <h4 className="text-base font-bold text-slate-900 mt-1">{ex.title}</h4>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Durasi: <strong>{ex.durationMinutes} Menit</strong> | Token: <strong className="font-mono text-purple-700">{ex.token}</strong> | Toleransi Pelanggaran: <strong>{ex.maxViolations || 3}x</strong>
+                        </p>
+                      </div>
+
+                      {/* Tombol Toggle Saklar Status Aktif / Nonaktif */}
+                      <div className="flex items-center space-x-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 self-start sm:self-auto">
+                        <div className="text-right">
+                          <div className="text-[10px] text-slate-400 font-bold uppercase">Status Ujian</div>
+                          <div className={`text-xs font-black ${isAct ? 'text-emerald-700' : 'text-slate-500'}`}>
+                            {isAct ? 'DIBUKA' : 'DITUTUP'}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleExamActive(ex.id)}
+                          className={`w-14 h-7 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
+                            isAct ? 'bg-emerald-600 justify-end' : 'bg-slate-300 justify-start'
+                          }`}
+                          title={isAct ? 'Klik untuk Menonaktifkan Ujian' : 'Klik untuk Mengaktifkan Ujian'}
+                        >
+                          <div className="w-5 h-5 rounded-full bg-white shadow-md"></div>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between text-xs text-slate-600 pt-1">
+                      <div className="flex items-center space-x-4">
+                        <span>Acak Soal: <strong>{ex.shuffleQuestionsByCategory ? 'Ya (Per Kategori)' : 'Tidak'}</strong></span>
+                        <span>Acak Pilihan: <strong>{ex.shuffleOptions ? 'Ya' : 'Tidak'}</strong></span>
+                      </div>
+                      <div className="text-slate-400 text-[11px]">
+                        ID: <code className="font-mono">{ex.id}</code>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ================= TAB: SETTING MATA PELAJARAN (MAPEL) ================= */}
+      {activeTab === 'subjects' && (
+        <div className="space-y-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+            <h3 className="font-bold text-slate-900 text-sm">Kelola Mata Pelajaran (Mapel)</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Daftar mata pelajaran yang digunakan oleh guru untuk mengelompokkan bank soal dan jadwal ujian di MIN 2 Kota Surabaya.
+            </p>
+
+            <form onSubmit={handleAddSubject} className="mt-4 flex gap-2 max-w-md">
+              <input
+                type="text"
+                required
+                value={newSubjectInput}
+                onChange={(e) => setNewSubjectInput(e.target.value)}
+                placeholder="Nama Mapel Baru (cth: Fiqih, IPA, dll)..."
+                className="flex-1 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 cursor-pointer shadow-xs"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Mapel</span>
+              </button>
+            </form>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+              Daftar Mapel Terdaftar ({subjects.length}):
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {subjects.map((sub, idx) => (
+                <div 
+                  key={idx}
+                  className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs hover:bg-purple-50/50 transition-colors"
+                >
+                  <div className="flex items-center space-x-2 font-bold text-slate-800">
+                    <FileText className="w-4 h-4 text-purple-600 shrink-0" />
+                    <span>{sub}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSubject(sub)}
+                    className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
+                    title="Hapus Mapel"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
